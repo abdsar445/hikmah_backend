@@ -1,0 +1,29 @@
+# Environments
+.env
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Data
+*.csv
+ingest_checkpoint.json
+
+# IDE
+.vscode/
+.idea/
+
+# Testing
+.pytest_cache/
+test_output.txt
+
+# Local deployment
+serve.py
+verify_db.py
