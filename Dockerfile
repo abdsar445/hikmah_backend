@@ -21,31 +21,29 @@ RUN pip install --upgrade pip \
 # ── Stage 2: Runtime image ────────────────────────────────────
 FROM python:3.11-slim AS runtime
 
-WORKDIR /app
+# Hugging Face Spaces strictly requires running as User 1000
+RUN useradd -m -u 1000 user
+USER user
+
+ENV HOME=/home/user \
+    PATH=/home/user/.local/bin:$PATH
+
+WORKDIR $HOME/app
 
 # Copy installed packages from builder
 COPY --from=builder /install /usr/local
 
-# Copy application source
-COPY . .
+# Copy application source with appropriate permissions
+COPY --chown=user . $HOME/app
 
 # Pre-download the embedding model so the container starts instantly
-# (avoids a cold-start download on first request)
 RUN python -c "from sentence_transformers import SentenceTransformer; \
                SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')"
 
-# Non-root user for security
-RUN adduser --disabled-password --gecos '' appuser \
-    && chown -R appuser /app
-USER appuser
+EXPOSE 7860
 
-EXPOSE 8000
-
-# Strictly limit internal Python Memory Fragmentation to fit inside Free Tier 512MB limits
+# We no longer need restrictive memory limits because Hugging Face gives us 16 GB of RAM!
 ENV MALLOC_ARENA_MAX=2
-ENV MAX_CONCURRENCY=1
-ENV OMP_NUM_THREADS=1
-ENV PYTORCH_JIT=0
 
-# Gunicorn with Uvicorn workers — better for production than plain uvicorn
-CMD uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1 --log-level info
+# Spin up Uvicorn on Hugging Face's required native Port 7860
+CMD uvicorn main:app --host 0.0.0.0 --port 7860 --workers 2 --log-level info
