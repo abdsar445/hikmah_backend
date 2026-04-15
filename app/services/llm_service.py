@@ -1,3 +1,4 @@
+import re
 import google.generativeai as genai
 
 class LLMService:
@@ -12,7 +13,40 @@ class LLMService:
         # 3. Using the standard stable model
         self.model = genai.GenerativeModel('gemini-2.5-flash')
 
+    def _is_greeting(self, user_query: str) -> bool:
+        normalized = re.sub(r"[^a-z0-9 ]+", "", user_query.lower()).strip()
+        tokens = normalized.split()
+        if not tokens:
+            return False
+
+        exact_greetings = {
+            "hi",
+            "hello",
+            "hey",
+            "salam",
+            "assalamualaikum",
+            "assalamu alaikum",
+            "good morning",
+            "good afternoon",
+            "good evening",
+        }
+
+        if normalized in exact_greetings:
+            return True
+
+        first_token = tokens[0]
+        if len(tokens) <= 3 and first_token in {"hi", "hello", "hey", "salam", "assalamualaikum", "assalamu", "good"}:
+            return True
+
+        return False
+
     async def get_chat_response(self, user_query: str, retrieved_hadiths: list) -> str:
+        if self._is_greeting(user_query):
+            return (
+                "Wa alaikum assalam! I am Himak, your Islamic Hadith assistant. "
+                "Ask me about authentic Hadith and I will answer from the sources."
+            )
+
         # Create a detailed context from the database results
         # h[0] is Book, h[1] is Text. Ensure this line ends with ])
         context = "\n".join([f"Book: {h[0]}, Hadith: {h[1]}" for h in retrieved_hadiths])
@@ -33,4 +67,4 @@ class LLMService:
         
         # Standard async generation
         response = await self.model.generate_content_async(prompt)
-        return response.text
+        return response.text.strip()
