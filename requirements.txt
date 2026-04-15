@@ -13,9 +13,12 @@ pydantic-settings==2.4.0
 
 # ── NLP / Embeddings ────────────────────────────────────────
 sentence-transformers==3.1.1
+--extra-index-url https://download.pytorch.org/whl/cpu
+--extra-index-url https://download.pytorch.org/whl/cpu
 torch               # CPU build; swap for torch+cu121 for GPU
 transformers==4.44.2
 numpy
+google-generativeai
 
 # ── Vector database ──────────────────────────────────────────
 pinecone==5.0.1                    # Pinecone Python SDK v3+
