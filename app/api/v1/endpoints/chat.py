@@ -1,3 +1,5 @@
+from typing import List, Optional
+
 from app.services.embedding_service import EmbeddingService
 from app.services.vector_store import VectorStore
 from fastapi import APIRouter
@@ -31,7 +33,21 @@ llm_service = LLMService()
 class ChatRequest(BaseModel):
     question: str
 
-@router.post("/ask")
+class ChatSource(BaseModel):
+    hadith_number: Optional[str]
+    narrator: Optional[str]
+    book: Optional[str]
+    collection: Optional[str]
+    arabic_text: Optional[str]
+    translation_en: Optional[str]
+    text: Optional[str]
+    grade: Optional[str]
+
+class ChatResponse(BaseModel):
+    answer: str
+    sources: List[ChatSource]
+
+@router.post("/ask", response_model=ChatResponse)
 async def ask_himak(request: ChatRequest):
     # 1. Search the Vector DB (Pinecone) for relevant Hadiths
     # We use request.question now
@@ -40,7 +56,19 @@ async def ask_himak(request: ChatRequest):
     # 2. Pass those Hadiths to the LLM (Gemini)
     ai_answer = await llm_service.get_chat_response(request.question, related_hadiths)
     
-    return {
-        "answer": ai_answer,
-        "sources": related_hadiths
-    }
+    return ChatResponse(
+        answer=ai_answer,
+        sources=[
+            ChatSource(
+                hadith_number=hadith.hadith_number,
+                narrator=hadith.narrator,
+                book=hadith.book,
+                collection=hadith.collection,
+                arabic_text=hadith.arabic_text,
+                translation_en=hadith.translation_en or hadith.text,
+                text=hadith.text,
+                grade=hadith.grade,
+            )
+            for hadith in related_hadiths.results
+        ],
+    )
