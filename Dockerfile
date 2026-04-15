@@ -48,5 +48,4 @@ ENV OMP_NUM_THREADS=1
 ENV PYTORCH_JIT=0
 
 # Gunicorn with Uvicorn workers — better for production than plain uvicorn
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", \
-     "--workers", "1", "--log-level", "info"]
+CMD uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1 --log-level info
