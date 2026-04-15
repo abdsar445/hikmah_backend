@@ -9,13 +9,16 @@ No business logic lives here — that belongs in SearchService.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from fastapi import APIRouter, Request, status
-from fastapi.responses import JSONResponse
 
 from app.schemas.search import SearchRequest, SearchResponse, ErrorResponse
-from app.services.search_service import SearchService
 from app.core.logger import logger
 from app.core.exceptions import EmbeddingError, VectorStoreError
+
+if TYPE_CHECKING:
+    from app.services.search_service import SearchService
 
 router = APIRouter()
 
@@ -60,18 +63,11 @@ async def search_hadiths(
     4. Filters results below `min_score`.
     5. Returns a ranked list of Hadiths with metadata.
     """
-    # Pull services from app.state (loaded once at startup)
-    embedding_service = request.app.state.embedding_service
-    vector_store = request.app.state.vector_store
+    if not hasattr(request.app.state, "search_service"):
+        raise RuntimeError("SearchService is not configured on the application state.")
 
-    # Instantiate the service (lightweight — no I/O in __init__)
-    search_service = SearchService(
-        embedding_service=embedding_service,
-        vector_store=vector_store,
-    )
+    search_service = request.app.state.search_service
 
-    # Delegate all work to the service layer
-    # EmbeddingError / VectorStoreError bubble up to the registered handlers
     result = await search_service.search(
         query=body.query,
         limit=body.limit,

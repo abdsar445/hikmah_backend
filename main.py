@@ -11,8 +11,6 @@ from contextlib import asynccontextmanager
 from app.api.v1.router import api_router
 from app.core.config import settings
 from app.core.logger import logger
-from app.services.embedding_service import EmbeddingService
-from app.services.vector_store import VectorStore
 
 
 # ---------------------------------------------------------------------------
@@ -28,6 +26,11 @@ async def lifespan(app: FastAPI):
     logger.info("[START] Himak backend starting up...")
 
     # 1. Load the sentence-transformer model into memory
+    from app.services.embedding_service import EmbeddingService
+    from app.services.vector_store import VectorStore
+    from app.services.search_service import SearchService
+    from app.services.llm_service import LLMService
+
     embedding_service = EmbeddingService(model_name=settings.EMBEDDING_MODEL)
     embedding_service.load()
     app.state.embedding_service = embedding_service
@@ -41,6 +44,13 @@ async def lifespan(app: FastAPI):
     vector_store.connect()
     app.state.vector_store = vector_store
     logger.info(f"[SUCCESS] Connected to Pinecone index: {settings.PINECONE_INDEX_NAME}")
+
+    # 3. Create high-level services and store them on application state
+    app.state.search_service = SearchService(
+        embedding_service=embedding_service,
+        vector_store=vector_store,
+    )
+    app.state.llm_service = LLMService()
 
     yield  # application runs here
 
