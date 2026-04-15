@@ -43,4 +43,4 @@ EXPOSE 8000
 
 # Gunicorn with Uvicorn workers — better for production than plain uvicorn
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", \
-     "--workers", "2", "--log-level", "info"]
+     "--workers", "1", "--log-level", "info"]
