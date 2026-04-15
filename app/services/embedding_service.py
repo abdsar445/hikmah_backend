@@ -18,6 +18,9 @@ Design decisions:
 from __future__ import annotations
 
 import numpy as np
+import torch
+# Disable multi-threading buffer bleed to physically clamp RAM footprint
+torch.set_num_threads(1)
 from sentence_transformers import SentenceTransformer
 
 from app.core.logger import logger

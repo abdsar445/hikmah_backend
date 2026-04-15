@@ -41,6 +41,12 @@ USER appuser
 
 EXPOSE 8000
 
+# Strictly limit internal Python Memory Fragmentation to fit inside Free Tier 512MB limits
+ENV MALLOC_ARENA_MAX=2
+ENV MAX_CONCURRENCY=1
+ENV OMP_NUM_THREADS=1
+ENV PYTORCH_JIT=0
+
 # Gunicorn with Uvicorn workers — better for production than plain uvicorn
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", \
      "--workers", "1", "--log-level", "info"]
