@@ -48,8 +48,7 @@ class LLMService:
             )
 
         # Create a detailed context from the database results
-        # h[0] is Book, h[1] is Text. Ensure this line ends with ])
-        context = "\n".join([f"Book: {h[0]}, Hadith: {h[1]}" for h in retrieved_hadiths])
+        context = "\n".join([f"Book: {h.book}, Hadith: {h.text}" for h in retrieved_hadiths])
         
         prompt = f"""
         You are 'Himak', an expert Islamic AI Assistant.
@@ -65,6 +64,11 @@ class LLMService:
         User Question: {user_query}
         """
         
-        # Standard async generation
-        response = await self.model.generate_content_async(prompt)
-        return response.text.strip()
+        try:
+            # Standard async generation
+            response = await self.model.generate_content_async(prompt)
+            return response.text.strip()
+        except Exception as e:
+            if "429" in str(e) or "quota" in str(e).lower():
+                return "I apologize, but my AI service has exceeded its daily free tier quota limits. Please try asking again tomorrow or provide a new API key."
+            return f"I apologize, I encountered an error connecting to my AI brain. Detail: {str(e)}"

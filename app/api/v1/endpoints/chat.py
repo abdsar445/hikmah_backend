@@ -40,7 +40,7 @@ async def ask_himak(request: Request, body: ChatRequest):
     llm_service = request.app.state.llm_service
 
     related_hadiths = await search_service.search(query=body.question, limit=10)
-    ai_answer = await llm_service.get_chat_response(body.question, related_hadiths)
+    ai_answer = await llm_service.get_chat_response(body.question, related_hadiths.results)
 
     return ChatResponse(
         answer=ai_answer,
